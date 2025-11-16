@@ -1,104 +1,70 @@
 <script>
+  import * as Alert from '$lib/components/ui/alert';
+  import { CheckCircle2, XCircle, AlertCircle, Info } from '@lucide/svelte';
+
   let { status } = $props();
 
-  /**
-   * @param {any} type
-   */
-  function getStatusClass(type) {
-    switch (type) {
-      case 'success':
-        return 'status-success';
-      case 'error':
-        return 'status-error';
-      case 'warning':
-        return 'status-warning';
-      default:
-        return 'status-info';
-    }
-  }
-
-  /**
-   * @param {any} type
-   */
   function getStatusIcon(type) {
     switch (type) {
       case 'success':
-        return '✅';
+        return CheckCircle2;
       case 'error':
-        return '❌';
+        return XCircle;
       case 'warning':
-        return '⚠️';
+        return AlertCircle;
       default:
-        return 'ℹ️';
+        return Info;
+    }
+  }
+
+  function getAlertVariant(type) {
+    switch (type) {
+      case 'error':
+        return 'destructive';
+      default:
+        return 'default';
+    }
+  }
+
+  function getAlertClass(type) {
+    switch (type) {
+      case 'success':
+        return 'border-green-600 bg-green-900/20 text-green-100';
+      case 'error':
+        return 'border-red-600 bg-red-900/20 text-red-100';
+      case 'warning':
+        return 'border-yellow-600 bg-yellow-900/20 text-yellow-100';
+      default:
+        return 'border-blue-600 bg-blue-900/20 text-blue-100';
+    }
+  }
+
+  function getIconClass(type) {
+    switch (type) {
+      case 'success':
+        return 'text-green-400';
+      case 'error':
+        return 'text-red-400';
+      case 'warning':
+        return 'text-yellow-400';
+      default:
+        return 'text-blue-400';
     }
   }
 </script>
 
 {#if status.visible}
-  <div class="status-toast {getStatusClass(status.type)}">
-    <span class="status-icon">{getStatusIcon(status.type)}</span>
-    <span class="status-message">{status.message}</span>
+  <div
+    class="fixed bottom-8 left-1/2 z-50 w-full max-w-md -translate-x-1/2 animate-in slide-in-from-bottom-5 px-4"
+  >
+    <Alert.Root class="shadow-2xl {getAlertClass(status.type)}">
+      <svelte:component
+        this={getStatusIcon(status.type)}
+        class="h-5 w-5 {getIconClass(status.type)}"
+      />
+      <Alert.Description class="ml-2 font-medium">
+        {status.message}
+      </Alert.Description>
+    </Alert.Root>
   </div>
 {/if}
-
-<style>
-  .status-toast {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 16px 24px;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 500;
-    z-index: 1000;
-    animation: slideUp 0.3s ease-out;
-    max-width: 500px;
-  }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateX(-50%) translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-  }
-
-  .status-icon {
-    font-size: 1.5em;
-  }
-
-  .status-message {
-    font-size: 1em;
-  }
-
-  .status-success {
-    background: #d5f4e6;
-    color: #155724;
-    border: 2px solid #27ae60;
-  }
-
-  .status-error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 2px solid #e74c3c;
-  }
-
-  .status-warning {
-    background: #fff3cd;
-    color: #856404;
-    border: 2px solid #ffc107;
-  }
-
-  .status-info {
-    background: #d1ecf1;
-    color: #0c5460;
-    border: 2px solid #3498db;
-  }
-</style>

@@ -1,4 +1,8 @@
 <script>
+  import * as Card from '$lib/components/ui/card';
+  import { Button } from '$lib/components/ui/button';
+  import { Grid3x3, ZoomIn, ZoomOut } from '@lucide/svelte';
+
   let { allSettings, uiState, cncFont, calculateOptimalLayout } = $props();
 
   let canvas = $state();
@@ -14,7 +18,7 @@
     ctx.clearRect(0, 0, width, height);
 
     // Draw background
-    ctx.fillStyle = '#f8f9fa';
+    ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, width, height);
 
     // Draw plaque outline (300x180mm scaled to canvas)
@@ -23,19 +27,33 @@
     const offsetX = (width - plaqueWidth) / 2;
     const offsetY = (height - plaqueHeight) / 2;
 
-    // Plaque background
-    ctx.fillStyle = '#e0e0e0';
+    // Plaque background - metallic look
+    const gradient = ctx.createLinearGradient(
+      offsetX,
+      offsetY,
+      offsetX + plaqueWidth,
+      offsetY + plaqueHeight
+    );
+    gradient.addColorStop(0, '#cbd5e1');
+    gradient.addColorStop(0.5, '#e2e8f0');
+    gradient.addColorStop(1, '#cbd5e1');
+    ctx.fillStyle = gradient;
     ctx.fillRect(offsetX, offsetY, plaqueWidth, plaqueHeight);
 
-    // Plaque border
-    ctx.strokeStyle = '#999';
-    ctx.lineWidth = 2;
+    // Plaque border - darker edges for depth
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 3;
     ctx.strokeRect(offsetX, offsetY, plaqueWidth, plaqueHeight);
+
+    // Inner shadow effect
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(offsetX + 5, offsetY + 5, plaqueWidth - 10, plaqueHeight - 10);
 
     // Grid lines (if enabled)
     if (uiState.showGrid) {
-      ctx.strokeStyle = '#ccc';
-      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
 
       // Vertical center line
@@ -55,24 +73,14 @@
       ctx.setLineDash([]);
     }
 
-    // Draw text
+    // Draw text - engraved effect
     const layout = calculateOptimalLayout(allSettings);
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
 
-    layout.lines.forEach((/** @type {{ text: any; x: any; y: any; size: any; }} */ line) => {
+    layout.lines.forEach((line) => {
       drawText(line.text, line.x, line.y, line.size);
     });
   }
 
-  /**
-   * @param {string | any[]} text
-   * @param {number} centerX
-   * @param {number} y
-   * @param {number} fontSize
-   */
   function drawText(text, centerX, y, fontSize) {
     const charSpacing = fontSize * 1.2 * 2;
     const totalWidth = (text.length - 1) * charSpacing;
@@ -87,19 +95,36 @@
     }
   }
 
-  /**
-   * @param {string | number} letter
-   * @param {number} x
-   * @param {number} y
-   * @param {number} size
-   */
   function drawLetter(letter, x, y, size) {
     const letterDef = cncFont[letter];
     if (!letterDef || letterDef.length === 0) return;
 
     const scaleFactor = (size / 14) * 2;
 
-    letterDef.forEach((/** @type {[any, any, any, any]} */ line) => {
+    // Draw shadow/depth effect first
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    letterDef.forEach((line) => {
+      const [x1, y1, x2, y2] = line;
+      const scaledX1 = x + x1 * scaleFactor;
+      const scaledY1 = y + y1 * scaleFactor;
+      const scaledX2 = x + x2 * scaleFactor;
+      const scaledY2 = y + y2 * scaleFactor;
+
+      ctx.beginPath();
+      ctx.moveTo(scaledX1 + 1, scaledY1 + 1);
+      ctx.lineTo(scaledX2 + 1, scaledY2 + 1);
+      ctx.stroke();
+    });
+
+    // Draw main letter
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 2.5;
+
+    letterDef.forEach((line) => {
       const [x1, y1, x2, y2] = line;
       const scaledX1 = x + x1 * scaleFactor;
       const scaledY1 = y + y1 * scaleFactor;
@@ -113,9 +138,6 @@
     });
   }
 
-  /**
-   * @param {HTMLCanvasElement} node
-   */
   function handleCanvasReady(node) {
     canvas = node;
     ctx = canvas.getContext('2d');
@@ -133,89 +155,50 @@
   });
 </script>
 
-<div class="preview-container">
-  <canvas use:handleCanvasReady width="800" height="600"></canvas>
+<Card.Root class="border-slate-700 bg-slate-800/50 overflow-hidden">
+  <Card.Content class="p-6">
+    <div class="space-y-4">
+      <!-- Canvas -->
+      <div class="overflow-hidden rounded-lg border-2 border-slate-700 bg-slate-900 shadow-2xl">
+        <canvas use:handleCanvasReady width="800" height="600" class="w-full"></canvas>
+      </div>
 
-  <div class="preview-controls">
-    <button class="control-btn" onclick={() => (uiState.showGrid = !uiState.showGrid)}>
-      {uiState.showGrid ? '🔲 Hide Grid' : '⊞ Show Grid'}
-    </button>
+      <!-- Preview Controls -->
+      <div
+        class="flex items-center justify-between gap-4 rounded-lg border border-slate-700 bg-slate-800/50 p-4"
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => (uiState.showGrid = !uiState.showGrid)}
+          class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+        >
+          <Grid3x3 class="mr-2 h-4 w-4" />
+          {uiState.showGrid ? 'Hide Grid' : 'Show Grid'}
+        </Button>
 
-    <div class="zoom-controls">
-      <button
-        class="control-btn"
-        onclick={() => (uiState.zoom = Math.max(0.5, uiState.zoom - 0.1))}
-      >
-        🔍−
-      </button>
-      <span class="zoom-label">{(uiState.zoom * 100).toFixed(0)}%</span>
-      <button
-        class="control-btn"
-        onclick={() => (uiState.zoom = Math.min(2.0, uiState.zoom + 0.1))}
-      >
-        🔍+
-      </button>
+        <div class="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="icon"
+            onclick={() => (uiState.zoom = Math.max(0.5, uiState.zoom - 0.1))}
+            class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+          >
+            <ZoomOut class="h-4 w-4" />
+          </Button>
+          <span class="min-w-[60px] text-center text-sm font-semibold text-slate-200">
+            {(uiState.zoom * 100).toFixed(0)}%
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onclick={() => (uiState.zoom = Math.min(2.0, uiState.zoom + 0.1))}
+            class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+          >
+            <ZoomIn class="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-
-<style>
-  .preview-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-  }
-
-  canvas {
-    flex: 1;
-    max-width: 100%;
-    height: auto;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    background: white;
-  }
-
-  .preview-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 2px solid #ecf0f1;
-  }
-
-  .control-btn {
-    padding: 10px 16px;
-    background: #f8f9fa;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .control-btn:hover {
-    background: #e9ecef;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .zoom-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .zoom-label {
-    font-weight: 600;
-    color: #495057;
-    min-width: 50px;
-    text-align: center;
-  }
-</style>
+  </Card.Content>
+</Card.Root>

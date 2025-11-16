@@ -1,4 +1,27 @@
 <script>
+  import * as Card from '$lib/components/ui/card';
+  import * as Select from '$lib/components/ui/select';
+  import { Button } from '$lib/components/ui/button';
+  import { Label } from '$lib/components/ui/label';
+  import { Input } from '$lib/components/ui/input';
+  import { Badge } from '$lib/components/ui/badge';
+  import { Progress } from '$lib/components/ui/progress';
+  import {
+    Wifi,
+    WifiOff,
+    RefreshCw,
+    Home,
+    Play,
+    Pause,
+    Square,
+    AlertTriangle,
+    ChevronUp,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    Loader2,
+  } from '@lucide/svelte';
+
   let {
     machineState = $bindable(),
     connectToMachine,
@@ -26,622 +49,402 @@
   });
 </script>
 
-<div class="machine-control">
-  <!-- Connection Panel -->
-  <div class="control-panel">
-    <div class="panel-header">
-      <h2>🔌 Machine Connection</h2>
-      <div class="connection-status" class:connected={machineState.connected}>
-        {machineState.connected ? '🟢 Connected' : '🔴 Disconnected'}
-      </div>
-    </div>
-
-    <div class="connection-controls">
-      {#if !machineState.connected}
-        <div class="port-selection">
-          <label for="port-select">Serial Port:</label>
-          <div class="port-input-group">
-            <select id="port-select" bind:value={selectedPort}>
-              {#each machineState.availablePorts as port}
-                <option value={port}>{port}</option>
-              {/each}
-            </select>
-            <button class="btn-icon" onclick={refreshPorts} title="Refresh Ports"> 🔄 </button>
+<div class="h-full overflow-y-auto bg-slate-900/50 p-6">
+  <div class="mx-auto max-w-6xl space-y-6">
+    <!-- Connection Panel -->
+    <Card.Root class="border-slate-700 bg-slate-800/50">
+      <Card.Header>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            {#if machineState.connected}
+              <Wifi class="h-5 w-5 text-green-400" />
+            {:else}
+              <WifiOff class="h-5 w-5 text-red-400" />
+            {/if}
+            <Card.Title class="text-white">Machine Connection</Card.Title>
           </div>
+          <Badge
+            variant={machineState.connected ? 'default' : 'destructive'}
+            class={machineState.connected
+              ? 'bg-green-600 hover:bg-green-700'
+              : 'bg-red-600 hover:bg-red-700'}
+          >
+            {machineState.connected ? 'Connected' : 'Disconnected'}
+          </Badge>
         </div>
-        <button
-          class="btn btn-success"
-          onclick={() => connectToMachine(selectedPort)}
-          disabled={!selectedPort}
-        >
-          📡 Connect to CNC
-        </button>
-      {:else}
-        <div class="connected-info">
-          <p><strong>Port:</strong> {machineState.port}</p>
-          <p><strong>Status:</strong> {machineState.status}</p>
-        </div>
-        <button class="btn btn-secondary" onclick={disconnectMachine}> 🔌 Disconnect </button>
-      {/if}
-    </div>
-  </div>
-
-  {#if machineState.connected}
-    <!-- Machine Status Panel -->
-    <div class="control-panel">
-      <div class="panel-header">
-        <h2>📊 Machine Status</h2>
-        <div class="machine-status" class:alarm={machineState.status === 'Alarm'}>
-          {machineState.status}
-        </div>
-      </div>
-
-      <div class="status-grid">
-        <div class="position-display">
-          <h3>Machine Position</h3>
-          <div class="coordinates">
-            <span>X: {machineState.position.x.toFixed(2)}mm</span>
-            <span>Y: {machineState.position.y.toFixed(2)}mm</span>
-            <span>Z: {machineState.position.z.toFixed(2)}mm</span>
+      </Card.Header>
+      <Card.Content class="space-y-4">
+        {#if !machineState.connected}
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <Label for="port-select" class="text-slate-200">Serial Port</Label>
+              <div class="flex gap-2">
+                <Select.Root
+                  selected={{ value: selectedPort, label: selectedPort || 'Select port' }}
+                >
+                  <Select.Trigger
+                    id="port-select"
+                    class="flex-1 border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600"
+                  >
+                    <Select.Value placeholder="Select a port" />
+                  </Select.Trigger>
+                  <Select.Content class="border-slate-600 bg-slate-800">
+                    {#each machineState.availablePorts as port}
+                      <Select.Item value={port} onclick={() => (selectedPort = port)}>
+                        {port}
+                      </Select.Item>
+                    {/each}
+                  </Select.Content>
+                </Select.Root>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onclick={refreshPorts}
+                  class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+                >
+                  <RefreshCw class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <Button
+              class="w-full bg-green-600 hover:bg-green-700"
+              onclick={() => connectToMachine(selectedPort)}
+              disabled={!selectedPort}
+            >
+              <Wifi class="mr-2 h-4 w-4" />
+              Connect to CNC
+            </Button>
           </div>
-        </div>
-
-        <div class="position-display">
-          <h3>Work Position</h3>
-          <div class="coordinates">
-            <span>X: {machineState.workPosition.x.toFixed(2)}mm</span>
-            <span>Y: {machineState.workPosition.y.toFixed(2)}mm</span>
-            <span>Z: {machineState.workPosition.z.toFixed(2)}mm</span>
+        {:else}
+          <div class="space-y-4">
+            <div class="rounded-lg border border-green-600 bg-green-900/20 p-4 space-y-2">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-300">Port:</span>
+                <span class="font-mono font-semibold text-green-300">{machineState.port}</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-300">Status:</span>
+                <Badge variant="outline" class="border-green-600 text-green-300">
+                  {machineState.status}
+                </Badge>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              class="w-full border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+              onclick={disconnectMachine}
+            >
+              <WifiOff class="mr-2 h-4 w-4" />
+              Disconnect
+            </Button>
           </div>
-        </div>
-      </div>
+        {/if}
+      </Card.Content>
+    </Card.Root>
 
-      {#if machineState.isRunning}
-        <div class="progress-section">
-          <h3>Engraving Progress</h3>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: {machineState.progress}%"></div>
-            <span class="progress-text">{machineState.progress.toFixed(1)}%</span>
+    {#if machineState.connected}
+      <!-- Machine Status Panel -->
+      <Card.Root class="border-slate-700 bg-slate-800/50">
+        <Card.Header>
+          <div class="flex items-center justify-between">
+            <Card.Title class="text-white">Machine Status</Card.Title>
+            <Badge
+              variant={machineState.status === 'Alarm' ? 'destructive' : 'default'}
+              class={machineState.status === 'Alarm' ? 'animate-pulse bg-red-600' : 'bg-blue-600'}
+            >
+              {machineState.status}
+            </Badge>
           </div>
-        </div>
-      {/if}
-    </div>
+        </Card.Header>
+        <Card.Content>
+          <div class="grid gap-4 md:grid-cols-2">
+            <!-- Machine Position -->
+            <div class="rounded-lg border border-slate-600 bg-slate-900/50 p-4">
+              <h3 class="mb-3 text-sm font-semibold text-slate-200">Machine Position</h3>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between rounded bg-slate-800/50 px-3 py-2">
+                  <span class="text-sm text-slate-400">X:</span>
+                  <span class="font-mono text-sm font-semibold text-white">
+                    {machineState.position.x.toFixed(2)}mm
+                  </span>
+                </div>
+                <div class="flex items-center justify-between rounded bg-slate-800/50 px-3 py-2">
+                  <span class="text-sm text-slate-400">Y:</span>
+                  <span class="font-mono text-sm font-semibold text-white">
+                    {machineState.position.y.toFixed(2)}mm
+                  </span>
+                </div>
+                <div class="flex items-center justify-between rounded bg-slate-800/50 px-3 py-2">
+                  <span class="text-sm text-slate-400">Z:</span>
+                  <span class="font-mono text-sm font-semibold text-white">
+                    {machineState.position.z.toFixed(2)}mm
+                  </span>
+                </div>
+              </div>
+            </div>
 
-    <!-- Control Actions Panel -->
-    <div class="control-panel">
-      <div class="panel-header">
-        <h2>🎮 Machine Control</h2>
-      </div>
+            <!-- Work Position -->
+            <div class="rounded-lg border border-slate-600 bg-slate-900/50 p-4">
+              <h3 class="mb-3 text-sm font-semibold text-slate-200">Work Position</h3>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between rounded bg-slate-800/50 px-3 py-2">
+                  <span class="text-sm text-slate-400">X:</span>
+                  <span class="font-mono text-sm font-semibold text-white">
+                    {machineState.workPosition.x.toFixed(2)}mm
+                  </span>
+                </div>
+                <div class="flex items-center justify-between rounded bg-slate-800/50 px-3 py-2">
+                  <span class="text-sm text-slate-400">Y:</span>
+                  <span class="font-mono text-sm font-semibold text-white">
+                    {machineState.workPosition.y.toFixed(2)}mm
+                  </span>
+                </div>
+                <div class="flex items-center justify-between rounded bg-slate-800/50 px-3 py-2">
+                  <span class="text-sm text-slate-400">Z:</span>
+                  <span class="font-mono text-sm font-semibold text-white">
+                    {machineState.workPosition.z.toFixed(2)}mm
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div class="control-actions">
-        <!-- Homing -->
-        <div class="action-group">
-          <button class="btn btn-warning" onclick={homeMachine} disabled={machineState.isRunning}>
-            🏠 Home Machine
-          </button>
-          <small>{machineState.isHomed ? '✅ Homed' : '❌ Not Homed'}</small>
-        </div>
+          {#if machineState.isRunning}
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-slate-200">Engraving Progress</h3>
+                <span class="text-sm font-semibold text-blue-400">
+                  {machineState.progress.toFixed(1)}%
+                </span>
+              </div>
+              <Progress value={machineState.progress} class="h-3" />
+            </div>
+          {/if}
+        </Card.Content>
+      </Card.Root>
 
-        <!-- Job Control -->
-        <div class="action-group">
-          <div class="job-controls">
+      <!-- Control Actions Panel -->
+      <Card.Root class="border-slate-700 bg-slate-800/50">
+        <Card.Header>
+          <Card.Title class="text-white">Machine Control</Card.Title>
+        </Card.Header>
+        <Card.Content class="space-y-6">
+          <!-- Homing -->
+          <div class="space-y-2">
+            <Button
+              variant="outline"
+              class="w-full border-yellow-600 bg-yellow-900/20 text-yellow-200 hover:bg-yellow-900/40 hover:text-yellow-100"
+              onclick={homeMachine}
+              disabled={machineState.isRunning}
+            >
+              <Home class="mr-2 h-4 w-4" />
+              Home Machine
+            </Button>
+            <div class="flex items-center justify-center gap-2 text-sm">
+              {#if machineState.isHomed}
+                <Badge variant="outline" class="border-green-600 text-green-300">✓ Homed</Badge>
+              {:else}
+                <Badge variant="outline" class="border-slate-600 text-slate-400">✗ Not Homed</Badge>
+              {/if}
+            </div>
+          </div>
+
+          <!-- Job Control -->
+          <div class="space-y-3">
             {#if !machineState.isRunning}
-              <button
-                class="btn btn-danger btn-large"
+              <Button
+                class="w-full bg-red-600 text-lg font-semibold hover:bg-red-700 h-14"
                 onclick={startEngraving}
                 disabled={!isValid || !machineState.isHomed}
               >
-                🔥 Start Engraving
-              </button>
+                <Play class="mr-2 h-5 w-5" />
+                Start Engraving
+              </Button>
             {:else}
-              <div class="running-controls">
+              <div class="grid grid-cols-2 gap-3">
                 {#if machineState.isPaused}
-                  <button class="btn btn-success" onclick={resumeEngraving}> ▶️ Resume </button>
+                  <Button class="bg-green-600 hover:bg-green-700" onclick={resumeEngraving}>
+                    <Play class="mr-2 h-4 w-4" />
+                    Resume
+                  </Button>
                 {:else}
-                  <button class="btn btn-warning" onclick={pauseEngraving}> ⏸️ Pause </button>
+                  <Button
+                    variant="outline"
+                    class="border-yellow-600 bg-yellow-900/20 text-yellow-200 hover:bg-yellow-900/40"
+                    onclick={pauseEngraving}
+                  >
+                    <Pause class="mr-2 h-4 w-4" />
+                    Pause
+                  </Button>
                 {/if}
-                <button class="btn btn-danger" onclick={stopEngraving}> ⏹️ Stop </button>
+                <Button variant="destructive" onclick={stopEngraving}>
+                  <Square class="mr-2 h-4 w-4" />
+                  Stop
+                </Button>
               </div>
             {/if}
           </div>
-        </div>
 
-        <!-- Emergency Stop -->
-        <div class="action-group">
-          <button class="btn btn-emergency" onclick={emergencyStop}> 🚨 EMERGENCY STOP </button>
-        </div>
-      </div>
-    </div>
+          <!-- Emergency Stop -->
+          <Button
+            variant="destructive"
+            class="w-full animate-pulse bg-red-700 text-lg font-bold hover:bg-red-800 h-14 border-2 border-red-500"
+            onclick={emergencyStop}
+          >
+            <AlertTriangle class="mr-2 h-6 w-6" />
+            EMERGENCY STOP
+          </Button>
+        </Card.Content>
+      </Card.Root>
 
-    <!-- Manual Jog Panel -->
-    <div class="control-panel">
-      <div class="panel-header">
-        <h2>🕹️ Manual Jog</h2>
-      </div>
-
-      <div class="jog-controls">
-        <div class="jog-settings">
-          <div class="jog-input">
-            <label for="jog-distance">Distance (mm):</label>
-            <select id="jog-distance" bind:value={jogDistance}>
-              <option value={0.1}>0.1</option>
-              <option value={1}>1</option>
-              <option value={10}>10</option>
-              <option value={50}>50</option>
-            </select>
-          </div>
-
-          <div class="jog-input">
-            <label for="jog-speed">Speed (mm/min):</label>
-            <input
-              id="jog-speed"
-              type="number"
-              bind:value={jogSpeed}
-              min="100"
-              max="2000"
-              step="100"
-            />
-          </div>
-        </div>
-
-        <div class="jog-pad">
-          <!-- Z Controls -->
-          <div class="z-controls">
-            <button
-              class="btn btn-jog"
-              onclick={() => jogMachine('Z', jogDistance)}
-              disabled={machineState.isRunning}
-            >
-              Z+
-            </button>
-            <button
-              class="btn btn-jog"
-              onclick={() => jogMachine('Z', -jogDistance)}
-              disabled={machineState.isRunning}
-            >
-              Z-
-            </button>
-          </div>
-
-          <!-- XY Controls -->
-          <div class="xy-controls">
-            <div class="xy-row">
-              <div></div>
-              <button
-                class="btn btn-jog"
-                onclick={() => jogMachine('Y', jogDistance)}
-                disabled={machineState.isRunning}
-              >
-                Y+
-              </button>
-              <div></div>
+      <!-- Manual Jog Panel -->
+      <Card.Root class="border-slate-700 bg-slate-800/50">
+        <Card.Header>
+          <Card.Title class="text-white">Manual Jog Controls</Card.Title>
+        </Card.Header>
+        <Card.Content class="space-y-6">
+          <!-- Jog Settings -->
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class="space-y-2">
+              <Label for="jog-distance" class="text-slate-200">Distance (mm)</Label>
+              <Select.Root selected={{ value: jogDistance, label: `${jogDistance}mm` }}>
+                <Select.Trigger
+                  id="jog-distance"
+                  class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600"
+                >
+                  <Select.Value />
+                </Select.Trigger>
+                <Select.Content class="border-slate-600 bg-slate-800">
+                  <Select.Item value={0.1} onclick={() => (jogDistance = 0.1)}>0.1mm</Select.Item>
+                  <Select.Item value={1} onclick={() => (jogDistance = 1)}>1mm</Select.Item>
+                  <Select.Item value={10} onclick={() => (jogDistance = 10)}>10mm</Select.Item>
+                  <Select.Item value={50} onclick={() => (jogDistance = 50)}>50mm</Select.Item>
+                </Select.Content>
+              </Select.Root>
             </div>
-            <div class="xy-row">
-              <button
-                class="btn btn-jog"
-                onclick={() => jogMachine('X', -jogDistance)}
-                disabled={machineState.isRunning}
-              >
-                X-
-              </button>
-              <button
-                class="btn btn-home-xy"
-                onclick={() => {
-                  jogMachine('X', -machineState.workPosition.x);
-                  jogMachine('Y', -machineState.workPosition.y);
-                }}
-                disabled={machineState.isRunning}
-              >
-                XY Home
-              </button>
-              <button
-                class="btn btn-jog"
-                onclick={() => jogMachine('X', jogDistance)}
-                disabled={machineState.isRunning}
-              >
-                X+
-              </button>
-            </div>
-            <div class="xy-row">
-              <div></div>
-              <button
-                class="btn btn-jog"
-                onclick={() => jogMachine('Y', -jogDistance)}
-                disabled={machineState.isRunning}
-              >
-                Y-
-              </button>
-              <div></div>
+
+            <div class="space-y-2">
+              <Label for="jog-speed" class="text-slate-200">Speed (mm/min)</Label>
+              <Input
+                id="jog-speed"
+                type="number"
+                bind:value={jogSpeed}
+                min="100"
+                max="2000"
+                step="100"
+                class="border-slate-600 bg-slate-700/50 text-white placeholder:text-slate-400"
+              />
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  {/if}
+
+          <!-- Jog Pad -->
+          <div class="grid gap-6 md:grid-cols-[auto_1fr]">
+            <!-- Z Controls -->
+            <div class="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                size="lg"
+                class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white h-16"
+                onclick={() => jogMachine('Z', jogDistance)}
+                disabled={machineState.isRunning}
+              >
+                <ChevronUp class="h-6 w-6" />
+                <div class="ml-2 text-xs">Z+</div>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white h-16"
+                onclick={() => jogMachine('Z', -jogDistance)}
+                disabled={machineState.isRunning}
+              >
+                <ChevronDown class="h-6 w-6" />
+                <div class="ml-2 text-xs">Z-</div>
+              </Button>
+            </div>
+
+            <!-- XY Controls -->
+            <div class="grid grid-rows-3 gap-2">
+              <!-- Row 1 -->
+              <div class="grid grid-cols-3 gap-2">
+                <div></div>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+                  onclick={() => jogMachine('Y', jogDistance)}
+                  disabled={machineState.isRunning}
+                >
+                  <div class="flex flex-col items-center">
+                    <ChevronUp class="h-6 w-6" />
+                    <span class="text-xs">Y+</span>
+                  </div>
+                </Button>
+                <div></div>
+              </div>
+
+              <!-- Row 2 -->
+              <div class="grid grid-cols-3 gap-2">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+                  onclick={() => jogMachine('X', -jogDistance)}
+                  disabled={machineState.isRunning}
+                >
+                  <div class="flex flex-col items-center">
+                    <ChevronLeft class="h-6 w-6" />
+                    <span class="text-xs">X-</span>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  class="border-orange-600 bg-orange-900/20 text-orange-200 hover:bg-orange-900/40 hover:text-orange-100"
+                  onclick={() => {
+                    jogMachine('X', -machineState.workPosition.x);
+                    jogMachine('Y', -machineState.workPosition.y);
+                  }}
+                  disabled={machineState.isRunning}
+                >
+                  <Home class="h-5 w-5" />
+                  <div class="ml-1 text-xs">XY</div>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+                  onclick={() => jogMachine('X', jogDistance)}
+                  disabled={machineState.isRunning}
+                >
+                  <div class="flex flex-col items-center">
+                    <ChevronRight class="h-6 w-6" />
+                    <span class="text-xs">X+</span>
+                  </div>
+                </Button>
+              </div>
+
+              <!-- Row 3 -->
+              <div class="grid grid-cols-3 gap-2">
+                <div></div>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+                  onclick={() => jogMachine('Y', -jogDistance)}
+                  disabled={machineState.isRunning}
+                >
+                  <div class="flex flex-col items-center">
+                    <ChevronDown class="h-6 w-6" />
+                    <span class="text-xs">Y-</span>
+                  </div>
+                </Button>
+                <div></div>
+              </div>
+            </div>
+          </div>
+        </Card.Content>
+      </Card.Root>
+    {/if}
+  </div>
 </div>
-
-<style>
-  .machine-control {
-    width: 100%;
-    padding: 20px;
-    overflow-y: auto;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  }
-
-  .control-panel {
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #ecf0f1;
-  }
-
-  .panel-header h2 {
-    font-size: 1.3em;
-    font-weight: 600;
-    color: #2c3e50;
-  }
-
-  .connection-status {
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: 600;
-    background: #e74c3c;
-    color: white;
-    transition: all 0.3s ease;
-  }
-
-  .connection-status.connected {
-    background: #27ae60;
-  }
-
-  .connection-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .port-selection {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .port-input-group {
-    display: flex;
-    gap: 10px;
-  }
-
-  .port-input-group select {
-    flex: 1;
-    padding: 12px;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 14px;
-  }
-
-  .btn-icon {
-    padding: 12px;
-    background: #ecf0f1;
-    border: 1px solid #bdc3c7;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .btn-icon:hover {
-    background: #d5dbdb;
-  }
-
-  .connected-info {
-    background: #d5f4e6;
-    padding: 15px;
-    border-radius: 8px;
-    border-left: 4px solid #27ae60;
-  }
-
-  .machine-status {
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: 600;
-    background: #3498db;
-    color: white;
-  }
-
-  .machine-status.alarm {
-    background: #e74c3c;
-    animation: pulse 1s infinite;
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-  }
-
-  .status-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-
-  .position-display {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    border-left: 4px solid #3498db;
-  }
-
-  .position-display h3 {
-    font-size: 1em;
-    margin-bottom: 10px;
-    color: #2c3e50;
-  }
-
-  .coordinates {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .coordinates span {
-    font-family: 'Courier New', monospace;
-    font-weight: 600;
-    background: white;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #e9ecef;
-  }
-
-  .progress-section {
-    margin-top: 20px;
-  }
-
-  .progress-section h3 {
-    margin-bottom: 10px;
-    color: #2c3e50;
-  }
-
-  .progress-bar {
-    position: relative;
-    background: #ecf0f1;
-    border-radius: 20px;
-    height: 30px;
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    background: linear-gradient(90deg, #3498db, #2980b9);
-    height: 100%;
-    border-radius: 20px;
-    transition: width 0.3s ease;
-  }
-
-  .progress-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #2c3e50;
-    font-weight: 600;
-  }
-
-  .control-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .action-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .job-controls {
-    display: flex;
-    justify-content: center;
-  }
-
-  .running-controls {
-    display: flex;
-    gap: 15px;
-  }
-
-  .btn {
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .btn-large {
-    padding: 18px 30px;
-    font-size: 18px;
-  }
-
-  .btn-success {
-    background: #27ae60;
-    color: white;
-  }
-
-  .btn-success:hover:not(:disabled) {
-    background: #229954;
-    transform: translateY(-2px);
-  }
-
-  .btn-secondary {
-    background: #95a5a6;
-    color: white;
-  }
-
-  .btn-secondary:hover:not(:disabled) {
-    background: #7f8c8d;
-    transform: translateY(-2px);
-  }
-
-  .btn-warning {
-    background: #f39c12;
-    color: white;
-  }
-
-  .btn-warning:hover:not(:disabled) {
-    background: #d68910;
-    transform: translateY(-2px);
-  }
-
-  .btn-danger {
-    background: #e74c3c;
-    color: white;
-  }
-
-  .btn-danger:hover:not(:disabled) {
-    background: #c0392b;
-    transform: translateY(-2px);
-  }
-
-  .btn-emergency {
-    background: linear-gradient(45deg, #e74c3c, #c0392b);
-    color: white;
-    font-size: 16px;
-    padding: 15px 25px;
-    border: 3px solid #a93226;
-    animation: emergencyGlow 2s infinite;
-  }
-
-  @keyframes emergencyGlow {
-    0%,
-    100% {
-      box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
-    }
-    50% {
-      box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
-    }
-  }
-
-  .btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none !important;
-  }
-
-  .jog-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .jog-settings {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-  }
-
-  .jog-input {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .jog-input label {
-    font-weight: 500;
-    color: #495057;
-    font-size: 0.9em;
-  }
-
-  .jog-input select,
-  .jog-input input {
-    padding: 10px;
-    border: 2px solid #e9ecef;
-    border-radius: 6px;
-    font-size: 14px;
-  }
-
-  .jog-pad {
-    display: grid;
-    grid-template-columns: 120px 1fr;
-    gap: 20px;
-    align-items: center;
-  }
-
-  .z-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .xy-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .xy-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-  }
-
-  .btn-jog {
-    background: #3498db;
-    color: white;
-    padding: 12px;
-    font-size: 16px;
-    font-weight: bold;
-  }
-
-  .btn-jog:hover:not(:disabled) {
-    background: #2980b9;
-  }
-
-  .btn-home-xy {
-    background: #e67e22;
-    color: white;
-    padding: 12px;
-    font-size: 12px;
-    font-weight: bold;
-  }
-
-  .btn-home-xy:hover:not(:disabled) {
-    background: #d35400;
-  }
-
-  @media (max-width: 768px) {
-    .status-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .jog-settings {
-      grid-template-columns: 1fr;
-    }
-
-    .jog-pad {
-      grid-template-columns: 1fr;
-    }
-
-    .running-controls {
-      flex-direction: column;
-    }
-  }
-</style>

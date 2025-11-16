@@ -1,180 +1,136 @@
 <script>
+  import * as Card from '$lib/components/ui/card';
+  import { Label } from '$lib/components/ui/label';
+  import * as Select from '$lib/components/ui/select';
+  import { Slider } from '$lib/components/ui/slider';
+  import { Button } from '$lib/components/ui/button';
+
+  function getLayoutLabel(value) {
+    const labels = {
+      auto: 'Auto (Smart)',
+      single: 'Single Line',
+      stacked: 'Stacked Names',
+    };
+    return labels[value] || value;
+  }
+
   let { designSettings = $bindable(), loadPreset } = $props();
 </script>
 
-<div class="section">
-  <h2>🎨 Design Settings</h2>
-
-  <div class="preset-buttons">
-    <button class="preset-btn" onclick={() => loadPreset('elegant')}> ✨ Elegant </button>
-    <button class="preset-btn" onclick={() => loadPreset('modern')}> 🌟 Modern </button>
-    <button class="preset-btn" onclick={() => loadPreset('classic')}> 📜 Classic </button>
-    <button class="preset-btn" onclick={() => loadPreset('bold')}> 💪 Bold </button>
-  </div>
-
-  <div class="form-group">
-    <label for="layout">Layout Style</label>
-    <select id="layout" bind:value={designSettings.layout}>
-      <option value="auto">Auto (Smart)</option>
-      <option value="single">Single Line</option>
-      <option value="stacked">Stacked Names</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <label for="nameSize">
-      Name Size: {designSettings.nameSize}mm
-    </label>
-    <input
-      id="nameSize"
-      type="range"
-      min="5"
-      max="12"
-      step="0.5"
-      bind:value={designSettings.nameSize}
-    />
-    <div class="range-labels">
-      <span>5mm</span>
-      <span>12mm</span>
+<Card.Root class="border-slate-700 bg-slate-800/50">
+  <Card.Header>
+    <Card.Title class="flex items-center gap-2 text-white">
+      <span class="text-xl">🎨</span>
+      Design Settings
+    </Card.Title>
+    <Card.Description class="text-slate-400">Customize the layout and appearance</Card.Description>
+  </Card.Header>
+  <Card.Content class="space-y-6">
+    <!-- Preset Buttons -->
+    <div class="space-y-2">
+      <Label class="text-slate-200">Quick Presets</Label>
+      <div class="grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          onclick={() => loadPreset('elegant')}
+          class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+        >
+          <span class="mr-2">✨</span>
+          Elegant
+        </Button>
+        <Button
+          variant="outline"
+          onclick={() => loadPreset('modern')}
+          class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+        >
+          <span class="mr-2">🌟</span>
+          Modern
+        </Button>
+        <Button
+          variant="outline"
+          onclick={() => loadPreset('classic')}
+          class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+        >
+          <span class="mr-2">📜</span>
+          Classic
+        </Button>
+        <Button
+          variant="outline"
+          onclick={() => loadPreset('bold')}
+          class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600 hover:text-white"
+        >
+          <span class="mr-2">💪</span>
+          Bold
+        </Button>
+      </div>
     </div>
-  </div>
 
-  <div class="form-group">
-    <label for="dateSize">
-      Date Size: {designSettings.dateSize}mm
-    </label>
-    <input
-      id="dateSize"
-      type="range"
-      min="4"
-      max="10"
-      step="0.5"
-      bind:value={designSettings.dateSize}
-    />
-    <div class="range-labels">
-      <span>4mm</span>
-      <span>10mm</span>
+    <!-- Layout Style -->
+    <div class="space-y-2">
+      <Label for="layout" class="text-slate-200">Layout Style</Label>
+      <Select.Root
+        selected={{ value: designSettings.layout, label: getLayoutLabel(designSettings.layout) }}
+      >
+        <Select.Trigger
+          id="layout"
+          class="border-slate-600 bg-slate-700/50 text-white hover:bg-slate-600"
+        >
+          <Select.Value placeholder="Select layout" />
+        </Select.Trigger>
+        <Select.Content class="border-slate-600 bg-slate-800">
+          <Select.Item value="auto" onclick={() => (designSettings.layout = 'auto')}
+            >Auto (Smart)</Select.Item
+          >
+          <Select.Item value="single" onclick={() => (designSettings.layout = 'single')}
+            >Single Line</Select.Item
+          >
+          <Select.Item value="stacked" onclick={() => (designSettings.layout = 'stacked')}
+            >Stacked Names</Select.Item
+          >
+        </Select.Content>
+      </Select.Root>
     </div>
-  </div>
-</div>
 
-<style>
-  .section {
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
+    <!-- Name Size -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <Label for="nameSize" class="text-slate-200">Name Size</Label>
+        <span class="text-sm font-semibold text-blue-400">{designSettings.nameSize}mm</span>
+      </div>
+      <Slider
+        id="nameSize"
+        min={5}
+        max={12}
+        step={0.5}
+        value={[designSettings.nameSize]}
+        onValueChange={(value) => (designSettings.nameSize = value[0])}
+        class="[&_[role=slider]]:bg-blue-500 [&_[role=slider]]:border-blue-400"
+      />
+      <div class="flex justify-between text-xs text-slate-400">
+        <span>5mm</span>
+        <span>12mm</span>
+      </div>
+    </div>
 
-  h2 {
-    font-size: 1.3em;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #ecf0f1;
-  }
-
-  .preset-buttons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-
-  .preset-btn {
-    padding: 12px;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .preset-btn:hover {
-    background: linear-gradient(135deg, #e9ecef, #dee2e6);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .form-group {
-    margin-bottom: 18px;
-  }
-
-  label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #495057;
-    font-size: 0.95em;
-  }
-
-  select {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 15px;
-    transition: all 0.3s ease;
-    background: white;
-    cursor: pointer;
-  }
-
-  select:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-  }
-
-  input[type='range'] {
-    width: 100%;
-    height: 6px;
-    border-radius: 3px;
-    background: #e9ecef;
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-
-  input[type='range']::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #3498db;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  input[type='range']::-webkit-slider-thumb:hover {
-    background: #2980b9;
-    transform: scale(1.2);
-  }
-
-  input[type='range']::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #3498db;
-    cursor: pointer;
-    border: none;
-    transition: all 0.3s ease;
-  }
-
-  input[type='range']::-moz-range-thumb:hover {
-    background: #2980b9;
-    transform: scale(1.2);
-  }
-
-  .range-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85em;
-    color: #6c757d;
-    margin-top: 5px;
-  }
-</style>
+    <!-- Date Size -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <Label for="dateSize" class="text-slate-200">Date Size</Label>
+        <span class="text-sm font-semibold text-blue-400">{designSettings.dateSize}mm</span>
+      </div>
+      <Slider
+        id="dateSize"
+        min={4}
+        max={10}
+        step={0.5}
+        value={[designSettings.dateSize]}
+        onValueChange={(value) => (designSettings.dateSize = value[0])}
+        class="[&_[role=slider]]:bg-blue-500 [&_[role=slider]]:border-blue-400"
+      />
+      <div class="flex justify-between text-xs text-slate-400">
+        <span>4mm</span>
+        <span>10mm</span>
+      </div>
+    </div>
+  </Card.Content>
+</Card.Root>
